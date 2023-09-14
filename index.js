@@ -94,16 +94,20 @@ function checkThreeOutcomeArb(matchDetails){
                 // calculate the bets to make based on a 1000 total
                 let totalBet = 1000;
 
-                let betOnHomeTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxTieOdds'] + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxAwayWinOdds']), 2);
-                let betOnAwayTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxTieOdds'] + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxHomeWinOdds']), 2);
-                let betOnTie = 1000 - betOnHomeTeam - betOnAwayTeam;
-                let earnings = betOnHomeTeam * gameSummary['outcomes']['maxHomeWinOdds'] - totalBet;
+                let unbiasBetOnHomeTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxTieOdds'] + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxAwayWinOdds']), 2);
+                let unbiasBetOnAwayTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxTieOdds'] + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxHomeWinOdds']), 2);
+                let unbiasBetOnTie = 1000 - unbiasBetOnHomeTeam - unbiasBetOnAwayTeam;
+                let earnings = unbiasBetOnHomeTeam * gameSummary['outcomes']['maxHomeWinOdds'] - totalBet;
 
-                console.log(`Bet Summary: 
-                            Bet ${betOnHomeTeam} on ${gameSummary['home']} using ${gameSummary['outcomes']['homeWinBooky']} (${gameSummary['outcomes']['maxHomeWinOdds']}) to win the game \n
-                            Bet ${betOnAwayTeam} on ${gameSummary['away']} using ${gameSummary['outcomes']['awayWinBooky']} (${gameSummary['outcomes']['maxAwayWinOdds']}) to win the game \n
-                            Bet ${betOnTie} on tie using ${gameSummary['outcomes']['tieBooky']} (${gameSummary['outcomes']['maxTieOdds']}) \n
+                console.log(`Unbias Bet Summary: 
+                            Bet ${unbiasBetOnHomeTeam} on ${gameSummary['home']} using ${gameSummary['outcomes']['homeWinBooky']} (${gameSummary['outcomes']['maxHomeWinOdds']}) to win the game \n
+                            Bet ${unbiasBetOnAwayTeam} on ${gameSummary['away']} using ${gameSummary['outcomes']['awayWinBooky']} (${gameSummary['outcomes']['maxAwayWinOdds']}) to win the game \n
+                            Bet ${unbiasBetOnTie} on tie using ${gameSummary['outcomes']['tieBooky']} (${gameSummary['outcomes']['maxTieOdds']}) \n
                             Earnings will be $${earnings}`);
+
+                let biasedHomeBet = threeOutcomeBiasedBetCalc(totalBet, gameSummary['outcomes']['maxTieOdds'], gameSummary['outcomes']['maxAwayWinOdds']);
+                let biasedAwayBet = threeOutcomeBiasedBetCalc(totalBet, gameSummary['outcomes']['maxTieOdds'], gameSummary['outcomes']['maxHomeWinOdds']);
+                let biasedTieBet = threeOutcomeBiasedBetCalc(totalBet, gameSummary['outcomes']['maxHomeWinOdds'], gameSummary['outcomes']['maxAwayWinOdds']);
             }
         }
     });
@@ -133,17 +137,31 @@ function checkTwoOutcomeArb(matchDetails){
               // calculate the bets to make based on a 1000 total
               let totalBet = 1000;
 
-              let betOnHomeTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxAwayWinOdds']), 2);
-              let betOnAwayTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxHomeWinOdds']), 2);
-              let earnings = betOnHomeTeam * gameSummary['outcomes']['maxHomeWinOdds'] - totalBet;
+              let unbiasBetOnHomeTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxHomeWinOdds']/gameSummary['outcomes']['maxAwayWinOdds']), 2);
+              let unbiasBetOnAwayTeam = Math.round(1000 / (1 + gameSummary['outcomes']['maxAwayWinOdds']/gameSummary['outcomes']['maxHomeWinOdds']), 2);
+              let earnings = unbiasBetOnHomeTeam * gameSummary['outcomes']['maxHomeWinOdds'] - totalBet;
 
-              console.log(`Bet Summary: 
-              Bet ${betOnHomeTeam} on ${gameSummary['home']} using ${gameSummary['outcomes']['homeWinBooky']} (${gameSummary['outcomes']['maxHomeWinOdds']}) to win the game \n
-              Bet ${betOnAwayTeam} on ${gameSummary['away']} using ${gameSummary['outcomes']['awayWinBooky']} (${gameSummary['outcomes']['maxAwayWinOdds']}) to win the game \n
+              console.log(`Unbaised Bet Summary: 
+              Bet ${unbiasBetOnHomeTeam} on ${gameSummary['home']} using ${gameSummary['outcomes']['homeWinBooky']} (${gameSummary['outcomes']['maxHomeWinOdds']}) to win the game \n
+              Bet ${unbiasBetOnAwayTeam} on ${gameSummary['away']} using ${gameSummary['outcomes']['awayWinBooky']} (${gameSummary['outcomes']['maxAwayWinOdds']}) to win the game \n
               Earnings will be $${earnings}`);
+
+              let biasedHomeBet = twoOutcomeBiasedBetCalc(totalBet, gameSummary['outcomes']['maxAwayWinOdds']);
+              let biasedAwayBet = twoOutcomeBiasedBetCalc(totalBet, gameSummary['outcomes']['maxHomeWinOdds']);
           }
       }
   });
+}
+
+function twoOutcomeBiasedBetCalc(betAmt, otherOdds){
+  let otherBetAmt = betAmt/otherOdds;
+  return {'biasedBetAmt': betAmt - otherBetAmt, 'otherBetAmt': otherBetAmt}
+}
+
+function threeOutcomeBiasedBetCalc(betAmt, otherOdds1, otherOdds2){
+  let otherBetAmt1 = betAmt/otherOdds1;
+  let otherBetAmt2 = betAmt/otherOdds2
+  return {'biasedBetAmt': betAmt - otherBetAmt1 - otherBetAmt2, 'otherBetAmt1': otherBetAmt1, 'otherBetAmt2': otherBetAmt2}
 }
 
 
